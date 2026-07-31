@@ -62,8 +62,10 @@ async function refreshUI() {
   }
 }
 
+// onAuthStateChange feuert beim Abonnieren sofort einmal mit dem aktuellen
+// Sitzungsstatus (INITIAL_SESSION) - ein zusätzlicher refreshUI()-Aufruf hier
+// führte zu zwei parallelen loadGallery()-Läufen und damit doppelten Fotos.
 supabase.auth.onAuthStateChange(() => refreshUI());
-refreshUI();
 
 function switchTab(name) {
   galleryView.classList.toggle("hidden", name !== "gallery");
