@@ -121,7 +121,10 @@ async function deletePhoto(photo) {
 }
 
 function renderQr() {
-  const url = window.location.origin + "/";
+  // Nicht nur origin nehmen: bei GitHub Pages liegt die Seite in einem
+  // Unterordner (z.B. .../hochzeitsfotos/), nicht direkt auf der Domain.
+  const basePath = window.location.pathname.replace(/admin\.html$/, "");
+  const url = window.location.origin + basePath;
   qrUrlText.textContent = url;
   qrCanvas.innerHTML = "";
   // eslint-disable-next-line no-undef
