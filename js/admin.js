@@ -78,16 +78,26 @@ async function loadGallery() {
       const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(photo.storage_path);
       const cell = document.createElement("div");
       cell.className = "gallery-cell";
+      const link = document.createElement("a");
+      link.href = urlData.publicUrl;
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.title = "Antippen für Originalgröße zum Sichern";
       const img = document.createElement("img");
       img.loading = "lazy";
       img.src = urlData.publicUrl;
       img.title = photo.guest_name || "";
+      link.appendChild(img);
       const delBtn = document.createElement("button");
       delBtn.className = "delete-btn";
       delBtn.textContent = "✕";
       delBtn.title = "Foto löschen";
-      delBtn.addEventListener("click", () => deletePhoto(photo));
-      cell.appendChild(img);
+      delBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        deletePhoto(photo);
+      });
+      cell.appendChild(link);
       cell.appendChild(delBtn);
       galleryGrid.appendChild(cell);
     });
