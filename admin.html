@@ -10,11 +10,31 @@
   nav.tabs { display: flex; gap: 8px; margin-bottom: 16px; }
   nav.tabs button { width: auto; flex: 1; background: #fff; color: var(--ink); border: 1px solid #ddd4cb; }
   nav.tabs button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-  #gallery-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-  .gallery-cell { position: relative; }
-  .gallery-cell img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; display: block; }
+  #gallery-grid { column-count: 2; column-gap: 14px; }
+  @media (min-width: 480px) { #gallery-grid { column-count: 3; } }
+  .gallery-cell {
+    position: relative;
+    display: block;
+    break-inside: avoid;
+    margin-bottom: 14px;
+    background: #fff;
+    padding: 6px 6px 10px;
+    border-radius: 6px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.06);
+    transform: rotate(var(--tilt, 0deg));
+  }
+  .gallery-cell img { width: 100%; height: auto; display: block; border-radius: 3px; }
+  .gallery-cell .challenge-caption {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--accent-dark) !important;
+    text-decoration: none !important;
+    font-weight: 600;
+    padding: 6px 2px 0;
+    line-height: 1.3;
+  }
   .gallery-cell .delete-btn {
-    position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; padding: 0;
+    position: absolute; top: 12px; right: 12px; width: 24px; height: 24px; padding: 0;
     margin: 0; border-radius: 50%; background: rgba(0,0,0,0.6); color: #fff;
     font-size: 0.8rem; line-height: 1; border: none;
   }

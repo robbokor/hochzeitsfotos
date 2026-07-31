@@ -19,6 +19,16 @@ const qrCanvas = document.getElementById("qr-canvas");
 const qrUrlText = document.getElementById("qr-url-text");
 const printBtn = document.getElementById("print-btn");
 
+// Leichte, aber stabile "Zufalls"-Neigung pro Foto (gleiches Foto = gleicher Winkel
+// bei jedem Laden, kein Springen beim Neuladen der Seite) - wie in der Gäste-Galerie.
+function tiltFor(seed) {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash * 31 + seed.charCodeAt(i)) | 0;
+  }
+  return (Math.abs(hash) % 70) / 10 - 3.5; // -3.5° bis +3.5°
+}
+
 loginForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   loginError.classList.add("hidden");
@@ -64,7 +74,7 @@ async function loadGallery() {
   try {
     const { data, error } = await supabase
       .from("photos")
-      .select("id, guest_name, storage_path, created_at")
+      .select("id, guest_name, storage_path, created_at, kind, challenge")
       .order("created_at", { ascending: false });
     if (error) throw error;
 
@@ -78,6 +88,7 @@ async function loadGallery() {
       const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(photo.storage_path);
       const cell = document.createElement("div");
       cell.className = "gallery-cell";
+      cell.style.setProperty("--tilt", `${tiltFor(photo.storage_path)}deg`);
       const link = document.createElement("a");
       link.href = urlData.publicUrl;
       link.target = "_blank";
@@ -88,6 +99,12 @@ async function loadGallery() {
       img.src = urlData.publicUrl;
       img.title = photo.guest_name || "";
       link.appendChild(img);
+      if (photo.kind === "challenge" && photo.challenge) {
+        const caption = document.createElement("span");
+        caption.className = "challenge-caption";
+        caption.textContent = `🎯 ${photo.challenge}`;
+        link.appendChild(caption);
+      }
       const delBtn = document.createElement("button");
       delBtn.className = "delete-btn";
       delBtn.textContent = "✕";
