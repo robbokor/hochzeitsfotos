@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Unsere Hochzeit – Galerie</title>
+<link rel="stylesheet" href="css/style.css" />
+<style>
+  .wrap { max-width: 720px; }
+  #gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  #gallery-grid img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; }
+  .back-link { display: block; text-align: center; margin-bottom: 16px; color: var(--accent-dark); text-decoration: none; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <h1>📸 Unsere Hochzeit</h1>
+    <p>Alle Fotos, die Gäste geteilt haben.</p>
+  </header>
+
+  <a href="index.html" class="back-link">← Selbst Fotos hochladen</a>
+
+  <p id="gallery-status" style="color:var(--muted); text-align:center;"></p>
+  <div id="gallery-grid"></div>
+
+  <footer>Bitte mit Respekt behandeln – das sind private Erinnerungen von euren Liebsten.</footer>
+</div>
+
+<script type="module" src="js/gallery.js"></script>
+</body>
+</html>

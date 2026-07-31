@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hochzeitsfotos – Verwaltung</title>
+<link rel="stylesheet" href="css/style.css" />
+<style>
+  .wrap { max-width: 720px; }
+  nav.tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  nav.tabs button { width: auto; flex: 1; background: #fff; color: var(--ink); border: 1px solid #ddd4cb; }
+  nav.tabs button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  #gallery-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .gallery-cell { position: relative; }
+  .gallery-cell img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; display: block; }
+  .gallery-cell .delete-btn {
+    position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; padding: 0;
+    margin: 0; border-radius: 50%; background: rgba(0,0,0,0.6); color: #fff;
+    font-size: 0.8rem; line-height: 1; border: none;
+  }
+  #qr-canvas { display: flex; justify-content: center; margin: 16px 0; }
+  #qr-canvas svg { max-width: 260px; width: 100%; }
+  #qr-url-text { text-align: center; color: var(--muted); font-size: 0.85rem; word-break: break-all; }
+  @media print {
+    body * { visibility: hidden; }
+    #qr-view, #qr-view * { visibility: visible; }
+    #qr-view { position: absolute; top: 0; left: 0; width: 100%; }
+    nav, #print-btn, header, footer { display: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <h1>Hochzeitsfotos – Verwaltung</h1>
+  </header>
+
+  <div id="login-card" class="card">
+    <h2>Anmelden</h2>
+    <div id="login-error" class="message error hidden"></div>
+    <form id="login-form">
+      <label for="login-email">E-Mail</label>
+      <input type="text" id="login-email" autocomplete="username" required />
+      <label for="login-password" style="margin-top:12px;">Passwort</label>
+      <input type="password" id="login-password" autocomplete="current-password" required />
+      <button type="submit" class="primary">Anmelden</button>
+    </form>
+  </div>
+
+  <div id="admin-area" class="hidden">
+    <nav class="tabs">
+      <button id="tab-gallery" class="active">Galerie</button>
+      <button id="tab-qr">QR-Code drucken</button>
+      <button id="logout-btn" style="flex:0 0 auto;">Abmelden</button>
+    </nav>
+
+    <div id="gallery-view">
+      <p id="gallery-status" style="color:var(--muted);"></p>
+      <div id="gallery-grid"></div>
+    </div>
+
+    <div id="qr-view" class="hidden card">
+      <h2>QR-Code für die Gäste</h2>
+      <div id="qr-canvas"></div>
+      <p id="qr-url-text"></p>
+      <button id="print-btn" class="secondary">Drucken</button>
+    </div>
+  </div>
+
+  <footer>Nur für das Brautpaar sichtbar.</footer>
+</div>
+
+<script src="js/vendor/qrcode.js"></script>
+<script type="module" src="js/admin.js"></script>
+</body>
+</html>
