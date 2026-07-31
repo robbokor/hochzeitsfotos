@@ -80,7 +80,13 @@ tabGallery.addEventListener("click", () => switchTab("gallery"));
 tabChallenges.addEventListener("click", () => switchTab("challenges"));
 tabQr.addEventListener("click", () => switchTab("qr"));
 
+// Schutz gegen überlappende Aufrufe: Supabase kann onAuthStateChange mehrfach
+// kurz hintereinander feuern (z.B. INITIAL_SESSION + TOKEN_REFRESHED), was
+// sonst zu zwei parallelen Ladevorgängen und doppelt angehängten Fotos führt.
+let galleryLoadId = 0;
+
 async function loadGallery() {
+  const loadId = ++galleryLoadId;
   galleryStatus.textContent = "Lädt…";
   galleryGrid.innerHTML = "";
   try {
@@ -89,6 +95,7 @@ async function loadGallery() {
       .select("id, guest_name, storage_path, created_at, kind, challenge")
       .order("created_at", { ascending: false });
     if (error) throw error;
+    if (loadId !== galleryLoadId) return; // ein neuerer Aufruf läuft bereits
 
     if (!data || data.length === 0) {
       galleryStatus.textContent = "Noch keine Fotos hochgeladen.";
