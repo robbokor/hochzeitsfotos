@@ -13,8 +13,24 @@
 <meta name="theme-color" content="#b98a6a" />
 <style>
   .wrap { max-width: 720px; }
-  nav.tabs { display: flex; gap: 8px; margin-bottom: 16px; }
-  nav.tabs button { width: auto; flex: 1; background: #fff; color: var(--ink); border: 1px solid #ddd4cb; }
+  nav.tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+  nav.tabs::-webkit-scrollbar { display: none; }
+  nav.tabs button {
+    width: auto;
+    flex: 0 0 auto;
+    white-space: nowrap;
+    background: #fff;
+    color: var(--ink);
+    border: 1px solid #ddd4cb;
+  }
   nav.tabs button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
   #gallery-grid { column-count: 2; column-gap: 14px; }
   @media (min-width: 480px) { #gallery-grid { column-count: 3; } }
