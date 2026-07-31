@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, MAX_PHOTOS_PER_GAST } from "./supabase-config.js";
+import { CHALLENGES, MAX_CHALLENGE_PHOTOS } from "./challenges-config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const BUCKET = "photos";
@@ -18,11 +19,24 @@ const uploadList = document.getElementById("upload-list");
 const changeNameBtn = document.getElementById("change-name-btn");
 const messageBox = document.getElementById("message-box");
 const greeting = document.getElementById("greeting");
+const actionsDiv = document.getElementById("actions");
+
+const challengeCard = document.getElementById("challenge-card");
+const challengeDoneCard = document.getElementById("challenge-done-card");
+const challengeCounterNum = document.getElementById("challenge-counter-num");
+const challengeText = document.getElementById("challenge-text");
+const challengeFileInput = document.getElementById("challenge-file-input");
+const challengeFileLabel = document.getElementById("challenge-file-label");
+const challengeUploadList = document.getElementById("challenge-upload-list");
 
 let normalizedName = null;
 let displayName = null;
 let remaining = MAX_PHOTOS_PER_GAST;
+let challengeRemaining = MAX_CHALLENGE_PHOTOS;
+let currentChallenge = null;
+let doneChallenges = new Set();
 let busy = false;
+let challengeBusy = false;
 
 function normalizeName(raw) {
   return raw.trim().toLowerCase().replace(/\s+/g, " ");
@@ -49,10 +63,39 @@ function updateCounterUI() {
   }
 }
 
-async function loadRemainingForName(name) {
-  const { data, error } = await supabase.rpc("get_remaining", { p_name: name });
+function pickNextChallenge() {
+  const unused = CHALLENGES.filter((c) => !doneChallenges.has(c));
+  const pool = unused.length > 0 ? unused : CHALLENGES;
+  currentChallenge = pool[Math.floor(Math.random() * pool.length)];
+  challengeText.textContent = currentChallenge;
+}
+
+function updateChallengeUI() {
+  challengeCounterNum.textContent = Math.max(challengeRemaining, 0);
+  if (challengeRemaining <= 0) {
+    challengeCard.classList.add("hidden");
+    challengeDoneCard.classList.remove("hidden");
+  } else {
+    challengeCard.classList.remove("hidden");
+    challengeDoneCard.classList.add("hidden");
+    pickNextChallenge();
+  }
+}
+
+async function loadRemaining(name, kind) {
+  const { data, error } = await supabase.rpc("get_remaining", { p_name: name, p_kind: kind });
   if (error) throw error;
   return data;
+}
+
+async function loadDoneChallenges(name) {
+  const { data, error } = await supabase
+    .from("photos")
+    .select("challenge")
+    .eq("normalized_name", name)
+    .eq("kind", "challenge");
+  if (error) throw error;
+  return new Set((data || []).map((row) => row.challenge).filter(Boolean));
 }
 
 async function startForName(raw) {
@@ -65,7 +108,9 @@ async function startForName(raw) {
   }
   localStorage.setItem(NAME_KEY, displayName);
   try {
-    remaining = await loadRemainingForName(normalizedName);
+    remaining = await loadRemaining(normalizedName, "normal");
+    challengeRemaining = await loadRemaining(normalizedName, "challenge");
+    doneChallenges = await loadDoneChallenges(normalizedName);
   } catch (err) {
     console.error(err);
     showMessage("Verbindung fehlgeschlagen. Bitte prüfe dein Internet und versuche es erneut.", "error");
@@ -73,7 +118,9 @@ async function startForName(raw) {
   }
   greeting.textContent = `Hallo ${displayName}!`;
   nameCard.classList.add("hidden");
+  actionsDiv.classList.remove("hidden");
   updateCounterUI();
+  updateChallengeUI();
 }
 
 nameForm.addEventListener("submit", (e) => {
@@ -83,9 +130,13 @@ nameForm.addEventListener("submit", (e) => {
 
 changeNameBtn.addEventListener("click", () => {
   normalizedName = null;
+  greeting.textContent = "";
   nameCard.classList.remove("hidden");
+  actionsDiv.classList.add("hidden");
   uploadCard.classList.add("hidden");
   doneCard.classList.add("hidden");
+  challengeCard.classList.add("hidden");
+  challengeDoneCard.classList.add("hidden");
   clearMessage();
 });
 
@@ -127,7 +178,7 @@ function compressImage(file, maxDim = 1920, quality = 0.82) {
   });
 }
 
-async function uploadOne(file) {
+async function uploadOne(file, { kind, challenge, targetList }) {
   const row = document.createElement("div");
   row.className = "upload-item";
   const thumb = document.createElement("img");
@@ -137,9 +188,10 @@ async function uploadOne(file) {
   status.textContent = "Komprimiere…";
   row.appendChild(thumb);
   row.appendChild(status);
-  uploadList.prepend(row);
+  targetList.prepend(row);
 
-  const fileName = `${normalizedName}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+  const prefix = kind === "challenge" ? "challenge-" : "";
+  const fileName = `${normalizedName}/${prefix}${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
   let uploaded = false;
 
   try {
@@ -157,23 +209,36 @@ async function uploadOne(file) {
     const { data: newCount, error: rpcError } = await supabase.rpc("submit_photo", {
       p_name: normalizedName,
       p_display_name: displayName,
-      p_storage_path: fileName
+      p_storage_path: fileName,
+      p_kind: kind,
+      p_challenge: challenge || null
     });
 
     if (rpcError) {
       if (rpcError.message && rpcError.message.includes("LIMIT_REACHED")) {
         status.textContent = "Limit erreicht";
         row.classList.add("error");
-        remaining = 0;
-        updateCounterUI();
+        if (kind === "challenge") {
+          challengeRemaining = 0;
+          updateChallengeUI();
+        } else {
+          remaining = 0;
+          updateCounterUI();
+        }
         await supabase.storage.from(BUCKET).remove([fileName]);
         return false;
       }
       throw rpcError;
     }
 
-    remaining = MAX_PHOTOS_PER_GAST - newCount;
-    updateCounterUI();
+    if (kind === "challenge") {
+      challengeRemaining = MAX_CHALLENGE_PHOTOS - newCount;
+      if (challenge) doneChallenges.add(challenge);
+      updateChallengeUI();
+    } else {
+      remaining = MAX_PHOTOS_PER_GAST - newCount;
+      updateCounterUI();
+    }
 
     status.textContent = "Fertig";
     row.classList.add("done");
@@ -202,7 +267,25 @@ fileInput.addEventListener("change", async () => {
 
   busy = true;
   fileLabel.classList.add("hidden");
-  await uploadOne(file);
+  await uploadOne(file, { kind: "normal", targetList: uploadList });
   fileLabel.classList.remove("hidden");
   busy = false;
+});
+
+challengeFileInput.addEventListener("change", async () => {
+  clearMessage();
+  const file = challengeFileInput.files && challengeFileInput.files[0];
+  challengeFileInput.value = "";
+  if (!file || challengeBusy) return;
+
+  if (challengeRemaining <= 0) {
+    showMessage(`Du hast dein Challenge-Kontingent von ${MAX_CHALLENGE_PHOTOS} Fotos aufgebraucht.`, "error");
+    return;
+  }
+
+  challengeBusy = true;
+  challengeFileLabel.classList.add("hidden");
+  await uploadOne(file, { kind: "challenge", challenge: currentChallenge, targetList: challengeUploadList });
+  challengeFileLabel.classList.remove("hidden");
+  challengeBusy = false;
 });

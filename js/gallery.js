@@ -24,7 +24,7 @@ async function loadGallery() {
   try {
     const { data, error } = await supabase
       .from("photos")
-      .select("guest_name, storage_path, created_at")
+      .select("guest_name, storage_path, created_at, kind, challenge")
       .order("created_at", { ascending: false });
     if (error) throw error;
 
@@ -47,6 +47,12 @@ async function loadGallery() {
       img.loading = "lazy";
       img.src = urlData.publicUrl;
       a.appendChild(img);
+      if (photo.kind === "challenge" && photo.challenge) {
+        const caption = document.createElement("span");
+        caption.className = "challenge-caption";
+        caption.textContent = `🎯 ${photo.challenge}`;
+        a.appendChild(caption);
+      }
       grid.appendChild(a);
     });
   } catch (err) {

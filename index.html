@@ -25,8 +25,10 @@
     </form>
   </div>
 
+  <p id="greeting" style="margin-top:0;color:var(--muted);text-align:center;"></p>
+
   <div id="upload-card" class="card hidden">
-    <p id="greeting" style="margin-top:0;color:var(--muted);"></p>
+    <h2 style="margin-top:0;">📷 Deine Fotos</h2>
     <div class="counter">
       <div class="num"><span id="counter-num">20</span></div>
       <div class="label">Fotos noch übrig</div>
@@ -36,15 +38,35 @@
     </label>
     <input type="file" id="file-input" accept="image/*" capture="environment" />
     <div id="upload-list"></div>
-    <a href="gallery.html" class="secondary" style="display:block;text-align:center;text-decoration:none;border:1px solid var(--accent);border-radius:10px;padding:14px 18px;margin-top:8px;color:var(--accent-dark);font-weight:600;">Galerie ansehen</a>
-    <button type="button" id="change-name-btn" class="secondary">Anderer Name</button>
   </div>
 
   <div id="done-card" class="card hidden">
     <h2>Danke! 💛</h2>
     <p>Du hast alle 20 Fotos hochgeladen. Wir freuen uns riesig, sie zu sehen!</p>
-    <a href="gallery.html" class="primary" style="display:block;text-align:center;text-decoration:none;background:var(--accent);color:#fff;border-radius:10px;padding:14px 18px;font-weight:600;">Galerie ansehen</a>
-    <button type="button" id="change-name-btn-2" class="secondary" onclick="document.getElementById('change-name-btn').click()">Anderer Name</button>
+  </div>
+
+  <div id="challenge-card" class="card hidden">
+    <h2 style="margin-top:0;">🎯 Foto-Challenge</h2>
+    <div class="counter">
+      <div class="num"><span id="challenge-counter-num">10</span></div>
+      <div class="label">Challenge-Fotos noch übrig</div>
+    </div>
+    <p id="challenge-text" style="text-align:center;font-weight:600;font-size:1.05rem;background:#f6efe7;border-radius:10px;padding:14px;"></p>
+    <label id="challenge-file-label" class="file-input-label" for="challenge-file-input">
+      📷 Foto für diese Aufgabe
+    </label>
+    <input type="file" id="challenge-file-input" accept="image/*" capture="environment" />
+    <div id="challenge-upload-list"></div>
+  </div>
+
+  <div id="challenge-done-card" class="card hidden">
+    <h2>Challenge geschafft! 🏆</h2>
+    <p>Du hast alle Challenge-Fotos gesammelt. Danke fürs Mitmachen!</p>
+  </div>
+
+  <div id="actions" class="actions hidden">
+    <a href="gallery.html" class="secondary" style="display:block;text-align:center;text-decoration:none;border:1px solid var(--accent);border-radius:10px;padding:14px 18px;margin-top:8px;color:var(--accent-dark);font-weight:600;">Galerie ansehen</a>
+    <button type="button" id="change-name-btn" class="secondary">Anderer Name</button>
   </div>
 
   <footer>Alle Gäste können die Galerie sehen – bitte behandelt sie mit Respekt 💛</footer>

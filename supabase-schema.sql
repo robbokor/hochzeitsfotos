@@ -1,14 +1,20 @@
 -- Hochzeitsfotos – Supabase-Schema
 -- Einmal komplett in den Supabase SQL-Editor einfügen und ausführen
 -- (Dashboard → SQL Editor → "New query" → einfügen → "Run").
+-- Für ein bereits laufendes Projekt: nicht dieses Skript, sondern die
+-- kleine Migration aus dem Chat-Verlauf verwenden (nur die neuen Teile).
 
 -- 1) Tabellen ---------------------------------------------------------------
+-- "kind" unterscheidet normale Fotos ('normal') von Foto-Challenge-Fotos
+-- ('challenge') — jede Art hat ihr eigenes Kontingent pro Gast.
 
 create table if not exists counters (
-  name text primary key,          -- normalisierter Gästename
+  name text not null,             -- normalisierter Gästename
+  kind text not null default 'normal',
   display_name text not null,
   count int not null default 0,
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  primary key (name, kind)
 );
 
 create table if not exists photos (
@@ -16,6 +22,8 @@ create table if not exists photos (
   normalized_name text not null,
   guest_name text not null,
   storage_path text not null,
+  kind text not null default 'normal',
+  challenge text,                 -- Aufgaben-Text, nur gesetzt bei kind='challenge'
   created_at timestamptz not null default now()
 );
 
@@ -38,20 +46,25 @@ create policy "photos_admin_delete" on photos
 -- 3) Limit-Erzwingung: eine atomare Funktion statt Client-Transaktion --------
 -- SECURITY DEFINER = läuft mit erhöhten Rechten, umgeht RLS auf counters/photos.
 -- Genau das ist beabsichtigt: nur diese Funktion darf counters/photos anfassen.
+-- Limit: 20 normale Fotos, 10 Challenge-Fotos pro Gast (siehe case-Ausdruck).
 
-create or replace function get_remaining(p_name text)
+create or replace function get_remaining(p_name text, p_kind text default 'normal')
 returns int
 language sql
 security definer
 set search_path = public
 as $$
-  select 20 - coalesce((select count from counters where name = p_name), 0);
+  select
+    (case when p_kind = 'challenge' then 10 else 20 end)
+    - coalesce((select count from counters where name = p_name and kind = p_kind), 0);
 $$;
 
 create or replace function submit_photo(
   p_name text,
   p_display_name text,
-  p_storage_path text
+  p_storage_path text,
+  p_kind text default 'normal',
+  p_challenge text default null
 )
 returns int
 language plpgsql
@@ -60,30 +73,33 @@ set search_path = public
 as $$
 declare
   v_count int;
+  v_limit int;
 begin
-  insert into counters (name, display_name, count, updated_at)
-  values (p_name, p_display_name, 1, now())
-  on conflict (name) do update
+  v_limit := case when p_kind = 'challenge' then 10 else 20 end;
+
+  insert into counters (name, kind, display_name, count, updated_at)
+  values (p_name, p_kind, p_display_name, 1, now())
+  on conflict (name, kind) do update
     set count = counters.count + 1,
         display_name = excluded.display_name,
         updated_at = now()
-    where counters.count < 20
+    where counters.count < v_limit
   returning count into v_count;
 
   if v_count is null then
     raise exception 'LIMIT_REACHED';
   end if;
 
-  insert into photos (normalized_name, guest_name, storage_path)
-  values (p_name, p_display_name, p_storage_path);
+  insert into photos (normalized_name, guest_name, storage_path, kind, challenge)
+  values (p_name, p_display_name, p_storage_path, p_kind, p_challenge);
 
   return v_count;
 end;
 $$;
 
 -- Nur anonyme Gäste (und angemeldete Admins) dürfen diese Funktionen aufrufen.
-grant execute on function get_remaining(text) to anon, authenticated;
-grant execute on function submit_photo(text, text, text) to anon, authenticated;
+grant execute on function get_remaining(text, text) to anon, authenticated;
+grant execute on function submit_photo(text, text, text, text, text) to anon, authenticated;
 
 -- 4) Storage-Bucket -----------------------------------------------------------
 -- Bucket manuell im Dashboard anlegen (Storage → "New bucket" → Name "photos",
