@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, MAX_PHOTOS_PER_GAST } from "./supabase-config.js";
-import { CHALLENGES, MAX_CHALLENGE_PHOTOS } from "./challenges-config.js";
+import { MAX_CHALLENGE_PHOTOS } from "./challenges-config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const BUCKET = "photos";
@@ -38,6 +38,7 @@ let remaining = MAX_PHOTOS_PER_GAST;
 let challengeRemaining = MAX_CHALLENGE_PHOTOS;
 let currentChallenge = null;
 let doneChallenges = new Set();
+let challengesPool = [];
 let busy = false;
 let challengeBusy = false;
 
@@ -67,8 +68,13 @@ function updateCounterUI() {
 }
 
 function pickNextChallenge() {
-  const unused = CHALLENGES.filter((c) => !doneChallenges.has(c));
-  const pool = unused.length > 0 ? unused : CHALLENGES;
+  if (challengesPool.length === 0) {
+    currentChallenge = null;
+    challengeText.textContent = "Gerade keine Aufgaben verfügbar – frag das Brautpaar!";
+    return;
+  }
+  const unused = challengesPool.filter((c) => !doneChallenges.has(c));
+  const pool = unused.length > 0 ? unused : challengesPool;
   currentChallenge = pool[Math.floor(Math.random() * pool.length)];
   challengeText.textContent = currentChallenge;
 }
@@ -101,6 +107,12 @@ async function loadDoneChallenges(name) {
   return new Set((data || []).map((row) => row.challenge).filter(Boolean));
 }
 
+async function loadChallengesPool() {
+  const { data, error } = await supabase.from("challenges").select("text");
+  if (error) throw error;
+  return (data || []).map((row) => row.text);
+}
+
 async function startForName(raw) {
   clearMessage();
   displayName = raw.trim();
@@ -114,6 +126,7 @@ async function startForName(raw) {
     remaining = await loadRemaining(normalizedName, "normal");
     challengeRemaining = await loadRemaining(normalizedName, "challenge");
     doneChallenges = await loadDoneChallenges(normalizedName);
+    challengesPool = await loadChallengesPool();
   } catch (err) {
     console.error(err);
     showMessage("Verbindung fehlgeschlagen. Bitte prüfe dein Internet und versuche es erneut.", "error");

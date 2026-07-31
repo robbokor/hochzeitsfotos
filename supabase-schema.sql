@@ -29,6 +29,13 @@ create table if not exists photos (
 
 create index if not exists photos_created_at_idx on photos (created_at desc);
 
+-- Foto-Challenge-Aufgaben: verwaltbar über admin.html → Tab "Challenges".
+create table if not exists challenges (
+  id uuid primary key default gen_random_uuid(),
+  text text not null,
+  created_at timestamptz not null default now()
+);
+
 -- 2) Zeilenschutz (RLS) -------------------------------------------------------
 -- counters: gar kein direkter Tabellenzugriff — nur über die Funktionen unten.
 alter table counters enable row level security;
@@ -42,6 +49,51 @@ create policy "photos_public_read" on photos
 
 create policy "photos_admin_delete" on photos
   for delete using (auth.role() = 'authenticated');
+
+-- challenges: alle (auch Gäste) dürfen die Liste lesen (für die Zuweisung),
+-- nur Admins dürfen Aufgaben hinzufügen/entfernen.
+alter table challenges enable row level security;
+
+create policy "challenges_public_read" on challenges
+  for select using (true);
+
+create policy "challenges_admin_insert" on challenges
+  for insert with check (auth.role() = 'authenticated');
+
+create policy "challenges_admin_delete" on challenges
+  for delete using (auth.role() = 'authenticated');
+
+-- Startbelegung mit den ursprünglichen Aufgaben (einmalig, danach über
+-- admin.html verwaltbar).
+insert into challenges (text) values
+  ('Ein Foto mit dem Vater des Bräutigams'),
+  ('Ein Foto mit der Mutter der Braut'),
+  ('Ein Selfie mit beiden Brauteltern'),
+  ('Ein Foto mit jemandem, den du heute zum ersten Mal triffst'),
+  ('Ein Foto mit den besten Tanzmoves des Abends'),
+  ('Ein Gruppenfoto mit mindestens 5 Personen'),
+  ('Ein Foto mit dem Brautpaar von hinten'),
+  ('Ein Foto von jemandem, der Tränen vor Lachen hat'),
+  ('Ein Foto mit den Trauzeugen'),
+  ('Ein Foto mit dem ältesten Gast der Feier'),
+  ('Ein Foto mit dem jüngsten Gast der Feier'),
+  ('Ein Foto vom schönsten Outfit des Abends'),
+  ('Ein Foto mit deinem Lieblingsgetränk des Abends'),
+  ('Ein Foto mit jemandem in den Lieblingsfarben der Braut'),
+  ('Ein Foto von der Tanzfläche mitten in Aktion'),
+  ('Ein Foto mit einem Kind (falls eins da ist)'),
+  ('Ein verschwörerisches Foto mit dem Brautpaar'),
+  ('Ein Foto mit jemandem, der von weit angereist ist'),
+  ('Ein Foto mit der Hochzeitstorte'),
+  ('Ein Foto mit dem lustigsten Gast des Abends'),
+  ('Ein Foto mit jemandem, der die Schuhe schon ausgezogen hat'),
+  ('Ein Foto mit dem DJ oder der Band'),
+  ('Ein Foto genau beim Anstoßen'),
+  ('Ein Foto mit jemandem in deinem Alter'),
+  ('Ein Gruppenfoto mit allen an eurem Tisch'),
+  ('Ein Foto von der schönsten Deko, die du findest'),
+  ('Ein Foto mit jemandem, den du lange nicht gesehen hast'),
+  ('Ein Foto, das die Braut zum Lachen bringt');
 
 -- 3) Limit-Erzwingung: eine atomare Funktion statt Client-Transaktion --------
 -- SECURITY DEFINER = läuft mit erhöhten Rechten, umgeht RLS auf counters/photos.

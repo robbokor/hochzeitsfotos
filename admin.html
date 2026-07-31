@@ -41,6 +41,20 @@
   #qr-canvas { display: flex; justify-content: center; margin: 16px 0; }
   #qr-canvas svg { max-width: 260px; width: 100%; }
   #qr-url-text { text-align: center; color: var(--muted); font-size: 0.85rem; word-break: break-all; }
+  #challenge-add-form { display: flex; gap: 8px; margin-bottom: 16px; }
+  #challenge-add-form input { flex: 1; margin: 0; }
+  #challenge-add-form button { width: auto; margin: 0; white-space: nowrap; }
+  #challenges-list { display: flex; flex-direction: column; gap: 8px; }
+  .challenge-row {
+    display: flex; align-items: center; gap: 10px;
+    background: #fff; border-radius: 10px; padding: 12px 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .challenge-row span { flex: 1; }
+  .challenge-row button {
+    width: 28px; height: 28px; flex: 0 0 auto; padding: 0; margin: 0;
+    border-radius: 50%; background: #f6efe7; color: var(--danger); border: none;
+  }
   @media print {
     body * { visibility: hidden; }
     #qr-view, #qr-view * { visibility: visible; }
@@ -71,6 +85,7 @@
   <div id="admin-area" class="hidden">
     <nav class="tabs">
       <button id="tab-gallery" class="active">Galerie</button>
+      <button id="tab-challenges">Challenges</button>
       <button id="tab-qr">QR-Code drucken</button>
       <button id="logout-btn" style="flex:0 0 auto;">Abmelden</button>
     </nav>
@@ -78,6 +93,15 @@
     <div id="gallery-view">
       <p id="gallery-status" style="color:var(--muted);"></p>
       <div id="gallery-grid"></div>
+    </div>
+
+    <div id="challenges-view" class="hidden">
+      <form id="challenge-add-form">
+        <input type="text" id="challenge-add-input" placeholder="Neue Aufgabe, z. B. Ein Foto mit Onkel Peter" required />
+        <button type="submit" class="primary">Hinzufügen</button>
+      </form>
+      <p id="challenges-status" style="color:var(--muted);"></p>
+      <div id="challenges-list"></div>
     </div>
 
     <div id="qr-view" class="hidden card">

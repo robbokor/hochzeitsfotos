@@ -10,11 +10,17 @@ const loginError = document.getElementById("login-error");
 const adminArea = document.getElementById("admin-area");
 const logoutBtn = document.getElementById("logout-btn");
 const tabGallery = document.getElementById("tab-gallery");
+const tabChallenges = document.getElementById("tab-challenges");
 const tabQr = document.getElementById("tab-qr");
 const galleryView = document.getElementById("gallery-view");
+const challengesView = document.getElementById("challenges-view");
 const qrView = document.getElementById("qr-view");
 const galleryGrid = document.getElementById("gallery-grid");
 const galleryStatus = document.getElementById("gallery-status");
+const challengeAddForm = document.getElementById("challenge-add-form");
+const challengeAddInput = document.getElementById("challenge-add-input");
+const challengesStatus = document.getElementById("challenges-status");
+const challengesList = document.getElementById("challenges-list");
 const qrCanvas = document.getElementById("qr-canvas");
 const qrUrlText = document.getElementById("qr-url-text");
 const printBtn = document.getElementById("print-btn");
@@ -61,11 +67,15 @@ refreshUI();
 
 function switchTab(name) {
   galleryView.classList.toggle("hidden", name !== "gallery");
+  challengesView.classList.toggle("hidden", name !== "challenges");
   qrView.classList.toggle("hidden", name !== "qr");
   tabGallery.classList.toggle("active", name === "gallery");
+  tabChallenges.classList.toggle("active", name === "challenges");
   tabQr.classList.toggle("active", name === "qr");
+  if (name === "challenges") loadChallenges();
 }
 tabGallery.addEventListener("click", () => switchTab("gallery"));
+tabChallenges.addEventListener("click", () => switchTab("challenges"));
 tabQr.addEventListener("click", () => switchTab("qr"));
 
 async function loadGallery() {
@@ -136,6 +146,68 @@ async function deletePhoto(photo) {
     alert("Löschen fehlgeschlagen: " + err.message);
   }
 }
+
+async function loadChallenges() {
+  challengesStatus.textContent = "Lädt…";
+  challengesList.innerHTML = "";
+  try {
+    const { data, error } = await supabase
+      .from("challenges")
+      .select("id, text")
+      .order("created_at", { ascending: true });
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      challengesStatus.textContent = "Noch keine Aufgaben angelegt.";
+      return;
+    }
+
+    challengesStatus.textContent = `${data.length} Aufgabe(n)`;
+    data.forEach((challenge) => {
+      const row = document.createElement("div");
+      row.className = "challenge-row";
+      const span = document.createElement("span");
+      span.textContent = challenge.text;
+      const delBtn = document.createElement("button");
+      delBtn.textContent = "✕";
+      delBtn.title = "Aufgabe streichen";
+      delBtn.addEventListener("click", () => deleteChallenge(challenge));
+      row.appendChild(span);
+      row.appendChild(delBtn);
+      challengesList.appendChild(row);
+    });
+  } catch (err) {
+    console.error(err);
+    challengesStatus.textContent = "Fehler beim Laden: " + err.message;
+  }
+}
+
+async function deleteChallenge(challenge) {
+  if (!confirm(`Aufgabe "${challenge.text}" wirklich streichen?`)) return;
+  try {
+    const { error } = await supabase.from("challenges").delete().eq("id", challenge.id);
+    if (error) throw error;
+    loadChallenges();
+  } catch (err) {
+    console.error(err);
+    alert("Streichen fehlgeschlagen: " + err.message);
+  }
+}
+
+challengeAddForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const text = challengeAddInput.value.trim();
+  if (!text) return;
+  try {
+    const { error } = await supabase.from("challenges").insert({ text });
+    if (error) throw error;
+    challengeAddInput.value = "";
+    loadChallenges();
+  } catch (err) {
+    console.error(err);
+    alert("Hinzufügen fehlgeschlagen: " + err.message);
+  }
+});
 
 function renderQr() {
   // Nicht nur origin nehmen: bei GitHub Pages liegt die Seite in einem
