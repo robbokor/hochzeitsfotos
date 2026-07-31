@@ -7,8 +7,21 @@
 <link rel="stylesheet" href="css/style.css" />
 <style>
   .wrap { max-width: 720px; }
-  #gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-  #gallery-grid img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; }
+  #gallery-grid { column-count: 2; column-gap: 14px; }
+  @media (min-width: 480px) { #gallery-grid { column-count: 3; } }
+  .photo-card {
+    display: block;
+    break-inside: avoid;
+    margin-bottom: 14px;
+    background: #fff;
+    padding: 6px 6px 10px;
+    border-radius: 6px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.06);
+    transform: rotate(var(--tilt, 0deg));
+    transition: transform 0.15s ease;
+  }
+  .photo-card:active { transform: rotate(var(--tilt, 0deg)) scale(0.97); }
+  .photo-card img { width: 100%; height: auto; display: block; border-radius: 3px; }
   .back-link { display: block; text-align: center; margin-bottom: 16px; color: var(--accent-dark); text-decoration: none; font-weight: 600; }
 </style>
 </head>

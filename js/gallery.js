@@ -7,6 +7,17 @@ const BUCKET = "photos";
 const grid = document.getElementById("gallery-grid");
 const status = document.getElementById("gallery-status");
 
+// Leichte, aber stabile "Zufalls"-Neigung pro Foto (gleiches Foto = gleicher Winkel
+// bei jedem Laden, kein Springen beim Neuladen der Seite).
+function tiltFor(seed) {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash * 31 + seed.charCodeAt(i)) | 0;
+  }
+  const degrees = (Math.abs(hash) % 70) / 10 - 3.5; // -3.5° bis +3.5°
+  return degrees;
+}
+
 async function loadGallery() {
   status.textContent = "Lädt…";
   grid.innerHTML = "";
@@ -26,10 +37,12 @@ async function loadGallery() {
     data.forEach((photo) => {
       const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(photo.storage_path);
       const a = document.createElement("a");
+      a.className = "photo-card";
       a.href = urlData.publicUrl;
       a.target = "_blank";
       a.rel = "noopener";
       a.title = photo.guest_name || "";
+      a.style.setProperty("--tilt", `${tiltFor(photo.storage_path)}deg`);
       const img = document.createElement("img");
       img.loading = "lazy";
       img.src = urlData.publicUrl;
