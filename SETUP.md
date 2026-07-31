@@ -85,13 +85,27 @@ euch beide (ein gemeinsames Konto reicht) → das sind die Zugangsdaten für
 `admin.html`. **"Auto Confirm User"** aktivieren, damit ihr euch sofort einloggen
 könnt.
 
-## 6. Deploy auf Netlify
+## 6. Deploy auf GitHub Pages
 
-1. Repo auf GitHub pushen (oder Ordner direkt bei Netlify per Drag & Drop hochladen).
-2. [app.netlify.com](https://app.netlify.com) → "Add new site" → Repo verbinden.
-   Build-Einstellungen: kein Build-Command nötig, Publish-Directory `.`
-   (steht schon in `netlify.toml`).
-3. Optional: eigene Domain/Subdomain verbinden (z. B. `fotos-eurename.de`).
+**Warum GitHub Pages statt Netlify:** Netlifys kostenloses Kontingent gilt fürs
+ganze Team, nicht pro Website – ein anderes Projekt im selben Account kann es
+aufbrauchen und damit auch die Deploys dieser App blockieren (genau das ist uns
+passiert). GitHub Pages hat dieses Problem nicht: kostenlos und unbegrenzt,
+solange das Repo öffentlich ist.
+
+**Wichtig:** GitHub Pages für **private** Repos braucht einen bezahlten Plan.
+Das Repo muss also öffentlich sein. Der Code enthält nichts Geheimes – der
+Supabase-`anon`-Key ist absichtlich öffentlich (siehe Schritt 2), Fotos liegen
+nicht im Repo, nur in Supabase Storage.
+
+1. Repo-Sichtbarkeit auf "Public" stellen: GitHub → Repo → Settings → ganz unten
+   "Danger Zone" → "Change visibility" → "Public".
+2. Settings → **"Pages"** → bei "Source" **"Deploy from a branch"** wählen,
+   Branch **main**, Ordner **/ (root)** → Speichern.
+3. Nach 1–2 Minuten ist die Seite live unter
+   `https://<dein-github-username>.github.io/<repo-name>/`.
+4. Bei jedem `git push` baut GitHub Pages automatisch neu – kein manuelles
+   Hochladen nötig.
 
 ## 7. QR-Code
 
