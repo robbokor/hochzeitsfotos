@@ -21,6 +21,9 @@ const messageBox = document.getElementById("message-box");
 const greeting = document.getElementById("greeting");
 const actionsDiv = document.getElementById("actions");
 
+const challengeSection = document.getElementById("challenge-section");
+const challengeToggleBtn = document.getElementById("challenge-toggle-btn");
+const challengeSkipBtn = document.getElementById("challenge-skip-btn");
 const challengeCard = document.getElementById("challenge-card");
 const challengeDoneCard = document.getElementById("challenge-done-card");
 const challengeCounterNum = document.getElementById("challenge-counter-num");
@@ -135,9 +138,16 @@ changeNameBtn.addEventListener("click", () => {
   actionsDiv.classList.add("hidden");
   uploadCard.classList.add("hidden");
   doneCard.classList.add("hidden");
-  challengeCard.classList.add("hidden");
-  challengeDoneCard.classList.add("hidden");
+  challengeSection.classList.add("hidden");
   clearMessage();
+});
+
+challengeToggleBtn.addEventListener("click", () => {
+  challengeSection.classList.toggle("hidden");
+});
+
+challengeSkipBtn.addEventListener("click", () => {
+  pickNextChallenge();
 });
 
 const saved = localStorage.getItem(NAME_KEY);
